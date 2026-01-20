@@ -57,21 +57,21 @@ Training Loop (with Hooks)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         YAML Config                          │
+│                         YAML Config                         │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                      Config Parser                          │
-│  - !include: 外部文件引用                                     │
-│  - template: 模板复写（递归 update）                            │
+│  - !include: 外部文件引用                                    │
+│  - template: 模板复写扩展                                    │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                        Builder                              │
 │  - build_model()                                            │
-│  - build_criterion()                                         │
-│  - build_optimizer()                                         │
-│  - build_dataloaders()                                       │
+│  - build_criterion()                                        │
+│  - build_optimizer()                                        │
+│  - build_dataloaders()                                      │
 │  - build_hooks()                                            │
 │  - build_meters()                                           │
 └────────────────────────┬────────────────────────────────────┘
@@ -79,9 +79,9 @@ Training Loop (with Hooks)
 ┌─────────────────────────────────────────────────────────────┐
 │                         Stage                               │
 │  - model: BaseModel                                         │
-│  - criterion: nn.Module                                      │
-│  - optimizer: Optimizer                                      │
-│  - dataloaders: Dict[str, DataLoader]                        │
+│  - criterion: nn.Module                                     │
+│  - optimizer: Optimizer                                     │
+│  - dataloaders: Dict[str, DataLoader]                       │
 │  - hooks: List[BaseHook]                                    │
 │  - meters: Dict[str, BaseMeter]                             │
 └────────────────────────┬────────────────────────────────────┘
@@ -188,28 +188,28 @@ def deep_update(target, source):
 ```
 Input Image
     ↓
-┌─────────────┐
-│  Backbone   │ (特征提取)
-│  - ResNet   │
-│  - MobileNet│
-│  - Custom   │
-└──────┬──────┘
+┌──────────────┐
+│  Backbone    │ (特征提取)
+│  - ResNet    │
+│  - MobileNet │
+│  - Custom    │
+└──────┬───────┘
        │ backbone_channel
        ↓
-┌─────────────┐
-│   Adapter   │ (特征转换)
-│  - Identity │
-│  - Conv     │
-│  - Linear   │
-└──────┬──────┘
+┌──────────────┐
+│   Adapter    │ (特征转换)
+│  - Identity  │
+│  - Conv      │
+│  - Linear    │
+└──────┬───────┘
        │ head_channel
        ↓
-┌─────────────┐
-│    Head     │ (任务特定)
+┌──────────────┐
+│    Head      │ (任务特定)
 │  - Classifier│
-│  - Detector │
-│  - Segmenter│
-└──────┬──────┘
+│  - Detector  │
+│  - Segmenter │
+└──────┬───────┘
        ↓
    Output
 ```
