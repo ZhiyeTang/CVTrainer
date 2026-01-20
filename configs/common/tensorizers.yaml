@@ -1,0 +1,16 @@
+# Tensorizer 模板
+imagenet_x:
+  type: "cvtrainer.data.tensorizer.ImageTensorizer"
+  kwargs:
+    normalize: imagenet
+    dtype: float
+
+single_label:
+  type: "cvtrainer.data.tensorizer.OneHotTensorizer"
+  kwargs:
+    dtype: float
+
+multilabel:
+  type: "cvtrainer.data.tensorizer.OneHotTensorizer"
+  kwargs:
+    dtype: float

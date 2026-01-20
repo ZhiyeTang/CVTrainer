@@ -1,0 +1,61 @@
+stages:
+  - name: "train"
+    epochs: 100
+
+    model: "apps.food_classifier.model.MyModel"
+    model_args:
+      num_classes: 101
+      dropout_rate: 0.5
+
+    criterion: "cvtrainer.loss.CrossEntropyLoss"
+
+    optimizer:
+      type: "Adam"
+      kwargs:
+        lr: 0.001
+      layerwise:
+        backbone: 0.001
+        adapter: 0.01
+        head: 0.1
+
+    dataloader:
+      train:
+        dataset:
+          data_path: "data/food101/train"
+
+        transforms:
+          template: "!include ../../../common/transforms.yaml::aug_medium"
+
+        tensorizer:
+          type: "cvtrainer.data.tensorizer.Tensorizer"
+          mapping:
+            x:
+              template: "!include ../../../common/tensorizers.yaml::imagenet_x"
+            class_id:
+              template: "!include ../../../common/tensorizers.yaml::single_label"
+              kwargs:
+                num_classes: 101
+
+        dataloader_args:
+          batch_size: 32
+          num_workers: 4
+          shuffle: true
+          collate_fn: "cvtrainer.data.collate.default_collate_fn"
+
+    hooks:
+      - type: "cvtrainer.hooks.LRSchedulerHook"
+        kwargs:
+          scheduler_type: "CosineAnnealingLR"
+          scheduler_kwargs:
+            T_max: 100
+      - type: "cvtrainer.hooks.EMAHook"
+        kwargs:
+          decay: 0.999
+      - type: "cvtrainer.hooks.CheckpointHook"
+        kwargs:
+          save_dir: "checkpoints"
+          save_freq: 10
+
+    meters:
+      - type: "cvtrainer.meters.LossMeter"
+      - type: "cvtrainer.meters.AccuracyMeter"

@@ -1,0 +1,48 @@
+# 数据增强模板
+aug_light:
+  backend: "Albumentations"
+  transforms:
+    - type: "Resize"
+      kwargs:
+        height: 256
+        width: 256
+    - type: "CenterCrop"
+      kwargs:
+        height: 224
+        width: 224
+
+aug_medium:
+  backend: "Albumentations"
+  transforms:
+    - type: "Resize"
+      kwargs:
+        height: 256
+        width: 256
+    - type: "RandomResizedCrop"
+      kwargs:
+        height: 224
+        width: 224
+    - type: "HorizontalFlip"
+      kwargs:
+        p: 0.5
+
+aug_heavy:
+  backend: "Albumentations"
+  transforms:
+    - type: "Resize"
+      kwargs:
+        height: 256
+        width: 256
+    - type: "RandomResizedCrop"
+      kwargs:
+        height: 224
+        width: 224
+    - type: "HorizontalFlip"
+      kwargs:
+        p: 0.5
+    - type: "VerticalFlip"
+      kwargs:
+        p: 0.5
+    - type: "RandomRotate90"
+      kwargs:
+        p: 0.5
