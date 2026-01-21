@@ -1,6 +1,7 @@
 import torch
+from typing import Dict, Union
+from numbers import Number
 from .base import BaseMeter
-from typing import List
 
 
 class AccuracyMeter(BaseMeter):
@@ -8,7 +9,7 @@ class AccuracyMeter(BaseMeter):
 
     def __init__(self, topk: tuple = (1,)):
         self.topk = topk
-        self.correct: List[int] = [0] * len(topk)
+        self.correct: Dict[int, int] = {k: 0 for k in topk}
         self.total = 0
 
     def update(self, output: torch.Tensor, target: torch.Tensor):
@@ -19,14 +20,14 @@ class AccuracyMeter(BaseMeter):
         correct = pred.eq(target.view(1, -1).expand_as(pred))
 
         self.total += target.size(0)
-        for i, k in enumerate(self.topk):
-            self.correct[i] += correct[:k].reshape(-1).float().sum(0, keepdim=True).item()
+        for k in self.topk:
+            self.correct[k] += correct[:k].reshape(-1).float().sum(0, keepdim=True).item()
 
-    def get_value(self) -> List[float]:
+    def get_value(self) -> Dict[str, Number]:
         """获取准确率"""
-        return [100.0 * c / max(self.total, 1) for c in self.correct]
+        return {f"accuracy_{k}": 100.0 * self.correct[k] / max(self.total, 1) for k in self.topk}
 
     def reset(self):
         """重置"""
-        self.correct = [0] * len(self.topk)
+        self.correct = {k: 0 for k in self.topk}
         self.total = 0

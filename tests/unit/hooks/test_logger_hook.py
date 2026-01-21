@@ -1,4 +1,5 @@
 """Logger Hook的单元测试"""
+
 import pytest
 from unittest.mock import MagicMock, patch
 from cvtrainer.hooks.logger import LoggerHook
@@ -48,19 +49,14 @@ class TestLoggerHook:
         context.set("loss", 0.5)
         context.set("meters", {"accuracy": 95.0})
 
-        stage = {
-            "context": context,
-            "epoch": 0,
-            "step": 5,
-            "phase": "train"
-        }
+        stage = {"context": context, "epoch": 0, "step": 10, "phase": "train"}
 
         hook.after_step(stage)
 
         mock_logger.log_metrics.assert_called_once()
         call_args = mock_logger.log_metrics.call_args[0][0]
         assert call_args["epoch"] == 0
-        assert call_args["step"] == 5
+        assert call_args["step"] == 10
         assert call_args["phase"] == "train"
         assert call_args["loss"] == 0.5
 
@@ -73,12 +69,7 @@ class TestLoggerHook:
         context = HookContext()
         context.set("loss", 0.5)
 
-        stage = {
-            "context": context,
-            "epoch": 0,
-            "step": 5,
-            "phase": "train"
-        }
+        stage = {"context": context, "epoch": 0, "step": 5, "phase": "train"}
 
         hook.after_step(stage)
         mock_logger.log_metrics.assert_not_called()
@@ -92,11 +83,7 @@ class TestLoggerHook:
         context = HookContext()
         context.set("meters", {"accuracy": 95.0, "loss": 0.5})
 
-        stage = {
-            "context": context,
-            "epoch": 0,
-            "phase": "val"
-        }
+        stage = {"context": context, "epoch": 0, "phase": "val"}
 
         hook.after_epoch(stage)
 

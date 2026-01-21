@@ -13,13 +13,22 @@ class ResNet18Backbone(BaseBackbone):
         self.model = resnet18(weights=weights)
         self._backbone_channel = 512
         self.model.fc = nn.Identity()
+        self.model.avgpool = nn.Identity()
 
     @property
     def backbone_channel(self) -> int:
         return self._backbone_channel
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
+        x = self.model.maxpool(x)
+        x = self.model.layer1(x)
+        x = self.model.layer2(x)
+        x = self.model.layer3(x)
+        x = self.model.layer4(x)
+        return x
 
 
 class ResNet50Backbone(BaseBackbone):
@@ -31,10 +40,19 @@ class ResNet50Backbone(BaseBackbone):
         self.model = resnet50(weights=weights)
         self._backbone_channel = 2048
         self.model.fc = nn.Identity()
+        self.model.avgpool = nn.Identity()
 
     @property
     def backbone_channel(self) -> int:
         return self._backbone_channel
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
+        x = self.model.maxpool(x)
+        x = self.model.layer1(x)
+        x = self.model.layer2(x)
+        x = self.model.layer3(x)
+        x = self.model.layer4(x)
+        return x

@@ -12,6 +12,8 @@ class MulticlassClassifier(BaseHead):
         self.fc = nn.Linear(head_channel, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.dim() == 4:
+            x = x.mean(dim=[2, 3])
         x = self.dropout(x)
         x = self.fc(x)
         return x
@@ -26,6 +28,8 @@ class MultiLabelClassifier(BaseHead):
         self.fc = nn.Linear(head_channel, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.dim() == 4:
+            x = x.mean(dim=[2, 3])
         x = self.dropout(x)
         x = self.fc(x)
         return x
