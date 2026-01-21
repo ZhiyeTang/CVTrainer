@@ -1,7 +1,58 @@
 """数据相关的测试 fixtures"""
 import pytest
 import torch
+import numpy as np
 from typing import Dict, Any
+from torch.utils.data import DataLoader
+from cvtrainer.data.base import BaseDataAdapter
+from cvtrainer.data.tensorizer.image import ImageTensorizer
+from cvtrainer.data.tensorizer.classification import OneHotTensorizer
+
+
+class MockTensorDataset(BaseDataAdapter):
+    """用于测试的 Mock DataAdapter，直接生成 tensor 数据"""
+
+    def __init__(self, x: torch.Tensor, y: torch.Tensor, transforms=None, tensorizer=None):
+        super().__init__(data_path="", transforms=transforms, tensorizer=tensorizer)
+        self.x = x
+        self.y = y
+        self.length = x.size(0)
+
+    def __len__(self) -> int:
+        return self.length
+
+    def _load_sample(self, idx: int) -> Dict[str, Any]:
+        if self.y.dim() > 1:
+            target = int(self.y[idx].argmax())
+        else:
+            target = int(self.y[idx])
+
+        return {
+            "x": self.x[idx].cpu().numpy(),
+            "target": {"class_id": target}
+        }
+
+
+@pytest.fixture
+def mock_tensor_dataloader(device):
+    """使用 MockTensorDataset 创建的 DataLoader"""
+    def _create(batch_size=10, num_samples=20, num_classes=10):
+        x = torch.randn(num_samples, 3, 32, 32, device=device)
+        y = torch.randint(0, num_classes, (num_samples,), device=device)
+        dataset = MockTensorDataset(x, y)
+        return DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    return _create
+
+
+@pytest.fixture
+def mock_classification_dataloader(device):
+    """分类任务的 mock DataLoader"""
+    def _create(batch_size=10, num_samples=20, image_size=(32, 32), num_classes=10):
+        x = torch.randn(num_samples, 3, *image_size, device=device)
+        y = torch.randint(0, num_classes, (num_samples,), device=device)
+        dataset = MockTensorDataset(x, y)
+        return DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    return _create
 
 
 @pytest.fixture

@@ -1,19 +1,17 @@
-"""Trainer相关的测试 fixtures"""
+"""Trainer相关的测试 fixtures - 使用 CVTrainer 数据系统"""
 import pytest
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from cvtrainer.trainer import Trainer
 from cvtrainer.meters import LossMeter, AccuracyMeter
 from cvtrainer.loss import CrossEntropyLoss
+from tests.fixtures.data_fixtures import MockTensorDataset
 
 
 @pytest.fixture
-def simple_dataloader(device):
-    """返回简单的DataLoader用于测试"""
-    x = torch.randn(100, 3, 32, 32, device=device)
-    y = torch.randint(0, 10, (100,), device=device)
-    dataset = TensorDataset(x, y)
-    return DataLoader(dataset, batch_size=10, shuffle=False)
+def simple_dataloader(device, mock_tensor_dataloader):
+    """返回简单的DataLoader使用CVTrainer DataAdapter"""
+    return mock_tensor_dataloader(batch_size=10, num_samples=100, num_classes=10)
 
 
 @pytest.fixture

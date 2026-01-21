@@ -1,21 +1,18 @@
-"""训练流程的集成测试"""
+"""训练流程的集成测试 - 使用 CVTrainer 数据系统"""
 import pytest
 import torch
-from torch.utils.data import DataLoader, TensorDataset
 from cvtrainer.trainer import Trainer
-from cvtrainer.meters import LossMeter, AccuracyMeter
+from cvtrainer.meters import LossMeter
 from cvtrainer.loss import CrossEntropyLoss
+from tests.fixtures.data_fixtures import MockTensorDataset
 
 
-class TestTrainingLoop:
-    """测试完整训练流程"""
+class TestTrainingLoopWithDataAdapter:
+    """使用 CVTrainer DataAdapter 测试完整训练流程"""
 
-    def test_single_epoch_training(self, device, small_model):
+    def test_single_epoch_training(self, device, small_model, mock_tensor_dataloader):
         """测试单个epoch的训练"""
-        x = torch.randn(20, 3, 32, 32, device=device)
-        y = torch.randint(0, 10, (20,), device=device)
-        dataset = TensorDataset(x, y)
-        dataloader = DataLoader(dataset, batch_size=10, shuffle=False)
+        dataloader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
 
         criterion = CrossEntropyLoss()
         optimizer = torch.optim.Adam(small_model.parameters(), lr=0.001)
@@ -26,7 +23,7 @@ class TestTrainingLoop:
             optimizer=optimizer,
             dataloaders={"train": dataloader},
             hooks=[],
-            meters={"loss": LossMeter(), "accuracy": AccuracyMeter()},
+            meters={"loss": LossMeter()},
             device=device
         )
 
@@ -36,12 +33,9 @@ class TestTrainingLoop:
         assert trainer.epoch == 0
         assert trainer.step > 0
 
-    def test_eval_mode(self, device, small_model):
+    def test_eval_mode(self, device, small_model, mock_tensor_dataloader):
         """测试评估模式"""
-        x = torch.randn(20, 3, 32, 32, device=device)
-        y = torch.randint(0, 10, (20,), device=device)
-        dataset = TensorDataset(x, y)
-        dataloader = DataLoader(dataset, batch_size=10, shuffle=False)
+        dataloader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
 
         criterion = CrossEntropyLoss()
         optimizer = torch.optim.Adam(small_model.parameters(), lr=0.001)
@@ -52,7 +46,7 @@ class TestTrainingLoop:
             optimizer=optimizer,
             dataloaders={"val": dataloader},
             hooks=[],
-            meters={"loss": LossMeter(), "accuracy": AccuracyMeter()},
+            meters={"loss": LossMeter()},
             device=device
         )
 
@@ -60,13 +54,10 @@ class TestTrainingLoop:
 
         assert trainer.model.training == False
 
-    def test_train_eval_mode_switch(self, device, small_model):
+    def test_train_eval_mode_switch(self, device, small_model, mock_tensor_dataloader):
         """测试训练/评估模式切换"""
-        x = torch.randn(20, 3, 32, 32, device=device)
-        y = torch.randint(0, 10, (20,), device=device)
-        dataset = TensorDataset(x, y)
-        train_loader = DataLoader(dataset, batch_size=10, shuffle=False)
-        val_loader = DataLoader(dataset, batch_size=10, shuffle=False)
+        train_loader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
+        val_loader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
 
         criterion = CrossEntropyLoss()
         optimizer = torch.optim.Adam(small_model.parameters(), lr=0.001)
@@ -77,7 +68,7 @@ class TestTrainingLoop:
             optimizer=optimizer,
             dataloaders={"train": train_loader, "val": val_loader},
             hooks=[],
-            meters={"loss": LossMeter(), "accuracy": AccuracyMeter()},
+            meters={"loss": LossMeter()},
             device=device
         )
 
@@ -91,18 +82,14 @@ class TestTrainingLoop:
 
         assert trainer.model.training == True
 
-    def test_meter_tracking_during_training(self, device, small_model):
+    def test_meter_tracking_during_training(self, device, small_model, mock_tensor_dataloader):
         """测试训练过程中meter的跟踪"""
-        x = torch.randn(20, 3, 32, 32, device=device)
-        y = torch.randint(0, 10, (20,), device=device)
-        dataset = TensorDataset(x, y)
-        dataloader = DataLoader(dataset, batch_size=10, shuffle=False)
+        dataloader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
 
         criterion = CrossEntropyLoss()
         optimizer = torch.optim.Adam(small_model.parameters(), lr=0.001)
 
         loss_meter = LossMeter()
-        acc_meter = AccuracyMeter()
 
         trainer = Trainer(
             model=small_model,
@@ -110,7 +97,7 @@ class TestTrainingLoop:
             optimizer=optimizer,
             dataloaders={"train": dataloader},
             hooks=[],
-            meters={"loss": loss_meter, "accuracy": acc_meter},
+            meters={"loss": loss_meter},
             device=device
         )
 
@@ -120,14 +107,11 @@ class TestTrainingLoop:
         assert isinstance(loss_value, float)
         assert loss_value >= 0
 
-    def test_trainer_with_custom_meters(self, device, small_model):
+    def test_trainer_with_custom_meters(self, device, small_model, mock_tensor_dataloader):
         """测试带自定义meter的训练"""
         from cvtrainer.meters import F1Meter
 
-        x = torch.randn(20, 3, 32, 32, device=device)
-        y = torch.randint(0, 10, (20,), device=device)
-        dataset = TensorDataset(x, y)
-        dataloader = DataLoader(dataset, batch_size=10, shuffle=False)
+        dataloader = mock_tensor_dataloader(batch_size=10, num_samples=20, num_classes=10)
 
         criterion = CrossEntropyLoss()
         optimizer = torch.optim.Adam(small_model.parameters(), lr=0.001)
