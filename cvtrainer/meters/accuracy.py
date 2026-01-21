@@ -20,9 +20,7 @@ class AccuracyMeter(BaseMeter):
 
         self.total += target.size(0)
         for i, k in enumerate(self.topk):
-            self.correct[i] += (
-                correct[:k].reshape(-1).float().sum(0, keepdim=True).item()
-            )
+            self.correct[i] += correct[:k].reshape(-1).float().sum(0, keepdim=True).item()
 
     def get_value(self) -> List[float]:
         """获取准确率"""
