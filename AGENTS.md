@@ -4,30 +4,31 @@
 
 ```bash
 # Install dependencies
-pip install -e .
-pip install -r requirements.txt
+mamba run -n dev pip install -e .
+mamba run -n dev pip install -r requirements.txt
 
-# Format code
-black cvtrainer/ tests/ apps/
+# Format code (Black, line-length 100)
+mamba run -n dev black cvtrainer/ tests/ apps/
 
 # Run all tests
-pytest
+mamba run -n dev python -m pytest
 
 # Run single test file
-pytest tests/test_config.py
+mamba run -n dev python -m pytest tests/unit/core/test_trainer.py -v
 
 # Run specific test
-pytest tests/test_config.py::test_include_yaml
+mamba run -n dev python -m pytest tests/unit/core/test_trainer.py::test_flatten_single_value -v
 
-# Run with verbose output
-pytest -v
+# Run with verbose and short traceback
+mamba run -n dev python -m pytest -v --tb=short
 ```
 
 ## Code Style Guidelines
 
 ### Imports
 - Standard library imports first, third-party imports next, local imports last
-- Use `from typing import Dict, Any, Optional, List, Tuple` for type hints
+- Use `from typing import Dict, Any, Optional, List, Tuple, Union` for type hints
+- Import `Number` from `numbers` for numeric types
 - Avoid wildcard imports
 - Example:
 ```python
@@ -98,16 +99,46 @@ cvtrainer/
 ├── meters/        # Metrics calculation
 ├── loss/          # Loss functions
 └── ddp/           # DDP support
+
+tests/
+├── conftest.py    # Global pytest config + fixtures
+├── fixtures/      # Shared test fixtures
+├── unit/          # Unit tests
+└── integration/   # Integration tests
 ```
 
 ### Testing
-- Test files: `tests/test_*.py`
+- Test files: `tests/unit/test_*.py` and `tests/integration/test_*.py`
 - Test functions: `test_*`
+- Test fixtures: `tests/fixtures/*.py`
 - Use pytest assertions
 - Mock external dependencies when needed
+- Test data: Use `MockTensorDataset` inheriting from `BaseDataAdapter` for integration tests
+
+### Meter Implementation Patterns
+- Meters must return `Union[Number, Dict[str, Number]]` from `get_value()`
+- Single-value meters (LossMeter, SegmentationIoUMeter): return `Number`
+- Multi-value meters (AccuracyMeter, DetectionMapMeter): return `Dict[str, Number]`
+- Keys in dict should clearly indicate metric meaning (e.g., `accuracy_1`, `map_50`)
 
 ### Configuration
 - Use YAML configuration files
 - Support `!include` for external file references
 - Support `template` field for overriding templates
 - All fields must be explicitly configured
+
+### Important Patterns
+- ResNet backbones: Return 4D feature maps [B, C, H, W] (not 2D [B, C])
+- Classifier heads: Support 4D inputs by adding global average pooling
+- Trainer._flatten_meters(): Intelligently flattens dict values with prefix matching
+  - Single values: `{"loss": 0.5}`
+  - Dicts with matching prefix: `{"map": 0.5, "map_50": 0.6}`
+  - Dicts without prefix: `{"classification/precision": 0.8}`
+- DataAdapter: Implement `_load_sample()` returning dict with `"x"` and `"target"` keys
+
+## Testing Best Practices
+- Fixtures should be in `tests/fixtures/` and imported in `conftest.py`
+- Use `device` fixture for testing on CPU/CUDA
+- Use `random_seed` fixture for reproducibility
+- Integration tests should use `MockTensorDataset` inheriting from `BaseDataAdapter`
+- Write tests for both positive and negative cases
