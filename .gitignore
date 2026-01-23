@@ -55,6 +55,7 @@ data/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
 
 # Ruff
 .ruff_cache/
